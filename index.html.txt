@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIGEEK ワクワククイズ！</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans JP', 'Inter', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .quiz-container {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out;
+            min-height: 620px; 
+            display: flex;
+            flex-direction: column;
+            position: relative; 
+        }
+        .quiz-container:hover {
+            transform: translateY(-5px);
+        }
+        .game-logo {
+            position: absolute;
+            top: 1.5rem; 
+            left: 1.5rem; 
+            width: 70px; 
+            height: auto;
+            z-index: 20; 
+        }
+        .main-title-custom .digeek-title-yellow {
+            color: #FDBF2D; /* DIGEEK Yellow */
+        }
+        .question-text {
+            color: #1e293b;
+            min-height: 60px;
+        }
+        .answer-btn-container {
+            position: relative; 
+            margin-bottom: 1.25rem; 
+        }
+        .answer-option-number {
+            position: absolute;
+            left: -20px; 
+            top: -12px;   
+            color: #374151; 
+            font-size: 1.125rem; 
+            font-weight: bold; 
+            z-index: 10;
+            line-height: 1; 
+            width: 28px; 
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .answer-btn, .difficulty-btn-styled, .restart-btn, .review-btn, .copy-review-btn, .reset-answered-btn {
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            border-radius: 9999px; 
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 0.75rem 1.5rem;
+            text-align: center;
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .answer-btn {
+            background-color: #3b82f6; 
+            color: white;
+            width: 100%;
+        }
+        .difficulty-buttons-grid-styled {
+            display: flex; 
+            justify-content: center; 
+            gap: 0.75rem; 
+            margin-bottom: 1.5rem;
+        }
+        .difficulty-btn-styled {
+            background-color: #ffffff; 
+            color: #374151; 
+            border: 1px solid #D1D5DB; 
+            padding: 0.6rem 1.2rem; 
+            min-width: 120px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .difficulty-btn-styled .icon-placeholder { 
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #E5E7EB; 
+            margin-right: 0.75rem; 
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+         .difficulty-btn-styled:hover { 
+            background-color: #FDBF2D; 
+            color: #1e293b; 
+            border-color: #FDBF2D;
+            transform: scale(1.03);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .difficulty-btn-styled.selected { 
+            background-color: #374151; 
+            color: #ffffff; 
+            border-color: #374151; 
+        }
+        .difficulty-btn-styled:hover .icon-placeholder {
+             background-color: #fde68a; 
+        }
+        .difficulty-btn-styled.selected .icon-placeholder {
+             background-color: #4B5563; 
+        }
+        .review-btn, .copy-review-btn {
+            background-color: #FDBF2D; 
+            color: #1e293b; 
+            margin-top: 0.75rem;
+            width: 100%;
+        }
+        .review-btn:hover, .copy-review-btn:hover {
+            background-color: #fca103; 
+            color: #1e293b;
+            transform: scale(1.03);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .answer-btn:hover, .restart-btn:hover { 
+            background-color: #FDBF2D; 
+            color: #1e293b;
+            transform: scale(1.03);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .answer-btn.correct {
+            background-color: #10b981; 
+            color: white;
+        }
+        .answer-btn.incorrect {
+            background-color: #ef4444; 
+            color: white;
+        }
+        .feedback-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            white-space: pre-line;
+        }
+        .feedback-text.correct { color: #10b981; }
+        .feedback-text.incorrect { color: #ef4444; }
+        .explanation-text {
+            font-size: 0.95rem;
+            color: #475569;
+            margin-top: 8px;
+            text-align: left;
+            padding: 10px 12px;
+            background-color: #f9fafb;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            line-height: 1.6;
+        }
+        .progress-bar-container {
+            background-color: #e5e7eb;
+            border-radius: 9999px;
+            height: 12px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            background-color: #3b82f6;
+            height: 100%;
+            transition: width 0.5s ease-in-out;
+            border-radius: 9999px;
+        }
+        .score-text { color: #475569; }
+        .final-score-container, .difficulty-selection-area {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .restart-btn {
+            background-color: #f97316; 
+            color: white;
+            width: 100%;
+        }
+        .reset-answered-btn {
+            background-color: #6b7280; /* Gray */
+            color: white;
+            font-size: 0.8rem;
+            padding: 0.5rem 1rem;
+            margin-top: 0.5rem;
+            width: auto;
+        }
+        .reset-answered-btn:hover {
+            background-color: #4b5563; /* Darker Gray */
+        }
+        .aphorism-text {
+            color: #4B5563; 
+            font-size: 0.875rem; 
+            margin-top: 1rem;
+            font-style: italic;
+            white-space: pre-wrap;
+        }
+        .loading-spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3b82f6; 
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .message-box {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1e293b;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1050; 
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            transform: translate(-50%, -20px);
+        }
+        .message-box.show {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+        #answerOptions {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+        }
+        .review-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001; 
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+        }
+        .review-modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease;
+        }
+        .review-modal-content {
+            background-color: white;
+            padding: 1.5rem; 
+            border-radius: 12px;
+            max-width: 90%;
+            width: 600px;
+            max-height: 85vh; 
+            overflow-y: auto;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .review-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .review-modal-title {
+            font-size: 1.5rem; 
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .review-modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 2rem; 
+            color: #6b7280;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0.25rem; 
+        }
+        .copy-review-btn-sm { 
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            width: auto; 
+        }
+        .review-item {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .review-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .review-question {
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        .review-your-answer, .review-correct-answer {
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+        .review-your-answer span { color: #ef4444; } 
+        .review-correct-answer span { color: #10b981; } 
+        .review-explanation {
+            font-size: 0.9rem;
+            color: #4b5563;
+            background-color: #f9fafb;
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4 sm:p-6">
+
+    <div id="messageBox" class="message-box"></div>
+
+    <div id="quizContainer" class="quiz-container w-full max-w-2xl p-6 sm:p-8">
+        <img src="https://i.imgur.com/MDrMa4T.png" alt="DIGEEK Logo" class="game-logo" id="gameLogo" onerror="this.src='https://placehold.co/100x40/cccccc/1E293B?text=Logo+Error'; console.error('Logo image failed to load. Please check the direct image link: https://i.imgur.com/MDrMa4T.png');">
+
+        <div class="flex-grow">
+            <h1 id="mainTitle" class="main-title-custom text-3xl sm:text-4xl font-bold text-center text-blue-600 mb-6 mt-12">
+                <span class="digeek-title-yellow">DIGEEK</span> Quiz!
+            </h1> 
+            <div id="difficultySelectionArea" class="text-center py-10 difficulty-selection-area">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-8">Select Difficulty</h2>
+                <div class="difficulty-buttons-grid-styled">
+                    <button id="beginnerBtn" data-difficulty="Beginner" class="difficulty-btn-styled">
+                        <span class="icon-placeholder">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6-2.292m0 0A9.043 9.043 0 0 0 9 7.5a9.043 9.043 0 0 0-3 1.5m0 0A9.043 9.043 0 0 0 9 7.5m0 0A9.043 9.043 0 0 0 9 7.5" />
+                            </svg>
+                        </span>
+                        Beginner
+                    </button>
+                    <button id="intermediateBtn" data-difficulty="Intermediate" class="difficulty-btn-styled">
+                        <span class="icon-placeholder">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                        </span>
+                        Intermediate
+                    </button>
+                    <button id="advancedBtn" data-difficulty="Advanced" class="difficulty-btn-styled">
+                        <span class="icon-placeholder">
+                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+                            </svg>
+                        </span>
+                        Advanced
+                    </button>
+                </div>
+                 <p class="text-sm text-gray-500 mt-8">Select a level to start. 5 questions will be randomly selected.</p>
+                 <button id="resetAnsweredBtn" class="reset-answered-btn mt-4">正解履歴をリセット</button>
+            </div>
+
+            <div id="loadingMessage" class="text-center py-10 hidden">
+                <div class="loading-spinner"></div>
+                <p id="loadingText" class="text-lg text-gray-600">Loading questions...</p>
+            </div>
+
+            <div id="gameArea" class="hidden flex-grow">
+                <div class="progress-bar-container w-full mb-6">
+                    <div id="progressBar" class="progress-bar"></div>
+                </div>
+
+                <div id="questionArea" class="mb-6">
+                    <p id="questionNumber" class="text-sm font-semibold text-blue-500 mb-1"></p>
+                    <p id="questionText" class="text-xl sm:text-2xl font-semibold question-text"></p>
+                </div>
+
+                <div id="answerOptions" class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-0"> 
+                </div>
+
+                <div id="feedbackArea" class="mt-6 text-center">
+                    <p id="feedbackText" class="feedback-text"></p>
+                    <div id="explanationContainer" class="hidden mt-2">
+                        <p id="explanationText" class="explanation-text"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="navigationAndScoreArea" class="mt-auto pt-6 hidden">
+             <div class="text-center mb-4">
+                <p id="scoreText" class="text-lg font-medium score-text">Score: <span id="score">0</span></p>
+            </div>
+            <div id="navigationArea" class="text-center">
+                <button id="nextButton" class="answer-btn px-8 py-3 text-lg hidden w-full sm:w-auto">Next Question</button>
+            </div>
+        </div>
+
+        <div id="finalScoreArea" class="hidden text-center final-score-container p-6 flex-grow flex flex-col justify-center">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-700 mb-4">Quiz Finished!</h2>
+            <p class="text-xl text-gray-600 mb-2">Your final score is...</p>
+            <p id="finalScore" class="text-5xl font-bold text-blue-600 mb-6"></p>
+            <p id="selectedDifficultyText" class="text-md text-gray-500 mb-1"></p>
+            <p id="totalQuestionsMessage" class="text-sm text-gray-500 mb-1"></p>
+            <p id="finalMessage" class="text-lg text-gray-500 mb-6"></p> 
+            <button id="reviewButton" class="review-btn hidden">Review Incorrect Answers</button>
+            <button id="restartButton" class="restart-btn mt-3">Try Again!</button>
+            <p id="aphorismArea" class="aphorism-text mt-4 hidden"></p>
+        </div>
+    </div>
+
+    <div id="reviewModalOverlay" class="review-modal-overlay">
+        <div id="reviewModalContent" class="review-modal-content">
+            <div class="review-modal-header">
+                <h3 class="review-modal-title">Review Time</h3>
+                <button id="copyReviewButton" class="copy-review-btn copy-review-btn-sm">Copy Review Text</button>
+                <button id="reviewModalCloseBtn" class="review-modal-close-btn">&times;</button>
+            </div>
+            <div id="reviewItemsContainer">
+            </div>
+            <p id="noIncorrectMessage" class="text-center text-gray-600 hidden">Excellent! All answers were correct.</p>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const mainTitle = document.getElementById('mainTitle');
+        const difficultySelectionArea = document.getElementById('difficultySelectionArea');
+        const beginnerBtn = document.getElementById('beginnerBtn');
+        const intermediateBtn = document.getElementById('intermediateBtn');
+        const advancedBtn = document.getElementById('advancedBtn');
+        const resetAnsweredBtn = document.getElementById('resetAnsweredBtn');
+        const gameArea = document.getElementById('gameArea');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const loadingText = document.getElementById('loadingText');
+        const questionNumberText = document.getElementById('questionNumber');
+        const questionText = document.getElementById('questionText');
+        const answerOptionsContainer = document.getElementById('answerOptions');
+        const feedbackText = document.getElementById('feedbackText');
+        const explanationContainer = document.getElementById('explanationContainer');
+        const explanationText = document.getElementById('explanationText');
+        const scoreDisplay = document.getElementById('score');
+        const nextButton = document.getElementById('nextButton');
+        const finalScoreArea = document.getElementById('finalScoreArea');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const selectedDifficultyText = document.getElementById('selectedDifficultyText');
+        const finalMessageText = document.getElementById('finalMessage');
+        const totalQuestionsMessage = document.getElementById('totalQuestionsMessage');
+        const reviewButton = document.getElementById('reviewButton');
+        const restartButton = document.getElementById('restartButton');
+        const aphorismArea = document.getElementById('aphorismArea');
+        const progressBar = document.getElementById('progressBar');
+        const messageBox = document.getElementById('messageBox');
+        const navigationAndScoreArea = document.getElementById('navigationAndScoreArea');
+        const reviewModalOverlay = document.getElementById('reviewModalOverlay');
+        const reviewModalContent = document.getElementById('reviewModalContent');
+        const reviewModalCloseBtn = document.getElementById('reviewModalCloseBtn');
+        const reviewItemsContainer = document.getElementById('reviewItemsContainer');
+        const noIncorrectMessage = document.getElementById('noIncorrectMessage');
+        const copyReviewButton = document.getElementById('copyReviewButton');
+        const gameLogo = document.getElementById('gameLogo'); 
+
+        const actualLogoUrl = "https://i.imgur.com/MDrMa4T.png"; 
+        gameLogo.src = actualLogoUrl;
+        gameLogo.onerror = () => {
+            gameLogo.src='https://placehold.co/100x40/cccccc/1E293B?text=Logo+Error';
+            console.error('Logo image failed to load. Check the direct image link in the script: ' + actualLogoUrl);
+        };
+
+        const aphorisms = [
+            "「Done is better than perfect.」 – スタートアップの精神で挑戦し続けよう。",
+            "「Slow and steady wins the race.」 – 中小企業の確実な成長をサポート。",
+            "「Rome was not built in a day.」 – 大企業の変革も一歩ずつ着実に。",
+            "革新的なサービスで世界を良くする情熱を、技術で形に。",
+            "顧客の事業成長こそが、私たちの喜びです。",
+            "ビジネス視点とユーザー視点、そして機動力で未来を切り拓く。",
+            "変化を恐れず、常に学び、進化し続けることが成功の鍵。"
+        ];
+
+        let currentQuestionInSessionIndex = 0;
+        let score = 0;
+        let sessionQuestions = []; 
+        let selectedDifficulty = '';
+        const QUESTIONS_PER_SESSION = 5;
+        let incorrectAnswersForReview = [];
+        const ANSWERED_QUESTIONS_KEY = 'digeekQuizAnsweredQuestions';
+
+        // Expanded Question Bank (50 Questions)
+        const allQuizQuestionsBank = [
+            // Beginner (15 questions)
+            { id: "B001", question: "DIGEEKの主な事業内容は次のうちどれですか？", options: ["ハードウェア開発", "ソフトウェア開発・システム開発", "マーケティングコンサルティング", "人材派遣"], answer: "ソフトウェア開発・システム開発", explanation: "DIGEEKはソフトウェア開発を主軸に、顧客の事業成長を支援しています。(P2参照)", difficulty: "Beginner" },
+            { id: "B002", question: "DIGEEKが提供するサービス「DX×生成AI」とは、主に何を目的としていますか？", options: ["最新AIモデルの研究", "属人的な業務のAIによる自動化・効率化", "AI搭載ロボットの開発", "AI倫理規定の策定"], answer: "属人的な業務のAIによる自動化・効率化", explanation: "データ統合とLLMを活用し、従来人間が行っていた業務をAIで代替し、24時間365日稼働させることを目指します。(P2参照)", difficulty: "Beginner" },
+            { id: "B003", question: "MVP開発とは、どのような開発手法ですか？", options: ["最も高機能な製品を開発する手法", "市場の反応を見るために最小限の価値で提供する製品開発", "時間をかけて完璧な製品を開発する手法", "大規模なチームで開発する手法"], answer: "市場の反応を見るために最小限の価値で提供する製品開発", explanation: "MVP（Minimum Viable Product）は、仮説検証のために最小限の機能で製品を開発し、顧客の需要を探る手法です。(P15参照)", difficulty: "Beginner" },
+            { id: "B004", question: "DIGEEKがシステム開発において顧客との認識の齟齬を防ぐために重視しているものは何ですか？", options: ["詳細な契約書", "長時間の会議", "モックアップ（試作品）の作成", "厳格な進捗管理"], answer: "モックアップ（試作品）の作成", explanation: "モックアップで完成形を可視化することにより、開発初期段階での認識のズレを防ぎます。(P7, P13参照)", difficulty: "Beginner" },
+            { id: "B005", question: "DIGEEKの資料に記載されているプロジェクト実績数はどのくらいですか？", options: ["約50件", "約100件", "200以上", "500以上"], answer: "200以上", explanation: "DIGEEKは200以上のプロジェクト実績を持っています。(P3参照)", difficulty: "Beginner" },
+            { id: "B006", question: "DIGEEKの「ラボ型開発」の契約形態は何ですか？", options: ["請負契約", "準委任契約", "派遣契約", "売買契約"], answer: "準委任契約", explanation: "ラボ型開発は準委任契約であり、顧客専属の開発チームを構築し、労働時間に対して対価が発生します。(P14参照)", difficulty: "Beginner" },
+            { id: "B007", question: "DIGEEKの「受託型開発」はどのような開発に向いていますか？", options: ["仕様が未確定な新規事業", "長期的にPDCAが必要な開発", "仕様と設計が固まった短期的開発", "頻繁に仕様変更が発生する開発"], answer: "仕様と設計が固まった短期的開発", explanation: "受託型開発は、仕様と設計が固まっており、仕様変更が少ない短期的な開発に適しています。(P14参照)", difficulty: "Beginner" },
+            { id: "B008", question: "DIGEEKの創業年はいつですか？", options: ["2010年", "2013年", "2018年", "2021年"], answer: "2013年", explanation: "DIGEEKは2013年7月1日に創業されました。(P31参照)", difficulty: "Beginner" },
+            { id: "B009", question: "DIGEEKのコアバリュー（行動指針）に「ビジネス視点」がありますが、これはどのような意味ですか？", options: ["常に利益を最優先する", "技術力のみを追求する", "顧客の事業計画や収益性まで考慮して開発を牽引する", "競合他社の分析に終始する"], answer: "顧客の事業計画や収益性まで考慮して開発を牽引する", explanation: "ビジネス視点とは、顧客の事業全体を理解し、その成功に貢献する開発を行うことを意味します。(P29参照)", difficulty: "Beginner" },
+            { id: "B010", question: "DIGEEKのミッションの一部として「日本の悪しきIT○○構造に振り回されず」とありますが、○○に入る言葉は何ですか？", options: ["ピラミッド", "ゼネコン", "マトリックス", "ネットワーク"], answer: "ゼネコン", explanation: "日本のIT業界の多重下請け構造（ゼネコン構造）の問題点を指摘し、それにとらわれない開発支援を目指しています。(P28参照)", difficulty: "Beginner" },
+            { id: "B011", question: "DIGEEKの代表取締役の名前は何ですか？", options: ["山田太郎", "佐藤次郎", "永山勇太", "鈴木三郎"], answer: "永山勇太", explanation: "DIGEEKの代表取締役は永山勇太氏です。(P30, P31参照)", difficulty: "Beginner" },
+            { id: "B012", question: "「PoC開発」の「PoC」とは何の略ですか？", options: ["Proof of Concept", "Product of Company", "Process of Creation", "Power of Computer"], answer: "Proof of Concept", explanation: "PoCは「Proof of Concept」の略で、概念実証を意味します。アイデアが実現可能か技術的に検証する開発です。(P2, P15参照)", difficulty: "Beginner" },
+            { id: "B013", question: "DIGEEKが開発で目指すのは、単にシステムを作ることではなく、何をすることですか？", options: ["最新技術を導入すること", "顧客の事業・業務を前に進め、改善すること", "開発コストを最小限に抑えること", "多くの機能を実装すること"], answer: "顧客の事業・業務を前に進め、改善すること", explanation: "DIGEEKの開発の目的は、顧客の事業や業務を前進させ、改善することにあります。(P2, P7参照)", difficulty: "Beginner" },
+            { id: "B014", question: "DIGEEKのロゴは何をモチーフにしていますか？（資料の表紙参照）", options: ["ソフトウェアのコード", "デジタルの波", "立方体（キューブ）", "地球"], answer: "立方体（キューブ）", explanation: "DIGEEKのロゴは、立方体をモチーフにしたデザインが特徴的です。(P1参照)", difficulty: "Beginner" },
+            { id: "B015", question: "DIGEEKの資料で「失われた30年を取り戻す」という記述があるのはどのセクションですか？", options: ["ミッション", "ビジョン", "コアバリュー", "代表メッセージ"], answer: "ビジョン", explanation: "DIGEEKのビジョンとして、日本の経済変化を実現し「失われた30年」を取り戻すことが掲げられています。(P28参照)", difficulty: "Beginner" },
+
+            // Intermediate (20 questions)
+            { id: "I001", question: "DIGEEKが指摘する、従来のシステム開発における「開発会社側の課題」とは具体的に何ですか？", options: ["技術力が不足している", "顧客の事業を深く理解できず、適正な提案・見積もりを提示できない", "開発スケジュールを守れない", "コミュニケーション能力が低い"], answer: "顧客の事業を深く理解できず、適正な提案・見積もりを提示できない", explanation: "開発会社が顧客のビジネスを深く理解しないまま開発を進めることが、問題の一因とされています。(P4参照)", difficulty: "Intermediate" },
+            { id: "I002", question: "DIGEEKが「事業開発フェーズ」を推奨する主な理由は何ですか？", options: ["開発期間を短縮するため", "より精度の高い要件定義・見積もりを実現するため", "最新技術を試すため", "開発コストを削減するため"], answer: "より精度の高い要件定義・見積もりを実現するため", explanation: "事業開発フェーズを経ることで、要件のヌケモレや過不足を防ぎ、コストパフォーマンスの高い開発を目指します。(P7, P12参照)", difficulty: "Intermediate" },
+            { id: "I003", question: "DIGEEKの強みである「CTOレベル人材」と「ビジネス・アナリスト(BA)」は、それぞれどのような役割を担っていますか？", options: ["CTO:営業、BA:開発", "CTO:戦略策定とアウトプット可視化、BA:設計チェックとプロジェクト推進", "CTO:デザイン、BA:テスト", "CTO:顧客対応、BA:インフラ管理"], answer: "CTO:戦略策定とアウトプット可視化、BA:設計チェックとプロジェクト推進", explanation: "CTOレベル人材が上流工程を担当し、BAがビジネス目的達成のための設計と品質担保を行います。(P8参照)", difficulty: "Intermediate" },
+            { id: "I004", question: "スタートアップ事例「データドリブンマーケティングツール」開発において、DIGEEKはどのような提案で5億円の資金調達達成に貢献しましたか？", options: ["全ての希望機能を実装するプラン", "開発期間を大幅に短縮するプラン", "実現難易度と機能優位性で機能を分別し、工数削減と事業計画に合わせた開発フェーズを提案", "海外のエンジニアを活用するプラン"], answer: "実現難易度と機能優位性で機能を分別し、工数削減と事業計画に合わせた開発フェーズを提案", explanation: "少ない開発で顧客課題を解決できる機能を追求し、資金調達後の事業計画も加味した提案を行いました。(P9参照)", difficulty: "Intermediate" },
+            { id: "I005", question: "SMB事例「カラオケ総合アプリ」開発で、DIGEEKはクライアントの課題に対しどのようなアプローチを取りましたか？", options: ["既存システムを全て刷新する提案", "クライアント責務とDIGEEK担当部分を明確化し、技術的アプローチを提案", "開発コストを半減させる提案", "AI機能を全面的に導入する提案"], answer: "クライアント責務とDIGEEK担当部分を明確化し、技術的アプローチを提案", explanation: "責任範囲を明確にし、クライアントの技術アセットでは対応が難しい部分をDIGEEKが補完する形で提案しました。(P10参照)", difficulty: "Intermediate" },
+            { id: "I006", question: "エンタープライズ事例「航空機点検管理システム」で、複数の既存システムのリプレイスに対しDIGEEKはどのようなプランを提案しましたか？", options: ["一度に全てのシステムをリプレイスするプラン", "開発フェーズを設計し段階的に統合するプラン", "オープンソースソフトウェアのみで構築するプラン", "海外のパッケージソフトを導入するプラン"], answer: "開発フェーズを設計し段階的に統合するプラン", explanation: "一度のリプレイスはリスクが高いため、段階的な統合プランを提案し、属人化部分の業務をシステム機能に落とし込みました。(P11参照)", difficulty: "Intermediate" },
+            { id: "I007", question: "DIGEEKのスタートアップ向けプロダクト戦略「Done is better than perfect.」が意味することは何ですか？", options: ["完璧な製品ができるまで公開しない", "とにかく早く作って世に出し、ユーザーの反応を確認する", "品質よりもコストを優先する", "計画よりも実行を重視する"], answer: "とにかく早く作って世に出し、ユーザーの反応を確認する", explanation: "完璧を追求するあまりプロジェクトが停滞することを避け、早期に市場のニーズを確認することを重視します。(P15参照)", difficulty: "Intermediate" },
+            { id: "I008", question: "DIGEEKのSMB向けプロダクト戦略「Slow and steady wins the race.」は、どのような開発体制を目指すものですか？", options: ["短期間で成果を出す開発", "将来的な内製化も見越した、コスト効率とスケーラビリティの高い開発基盤の構築", "最新技術を積極的に導入する開発", "競合他社を模倣する開発"], answer: "将来的な内製化も見越した、コスト効率とスケーラビリティの高い開発基盤の構築", explanation: "中小企業の着実な成長のために、将来の拡大を考慮したスケーラブルな開発体制の構築を目指します。(P19参照)", difficulty: "Intermediate" },
+            { id: "I009", question: "DIGEEKのエンタープライズ向けプロダクト戦略「Rome was not built in a day.」が重視する点は何ですか？", options: ["開発スピードの最大化", "セキュリティやコンプライアンスを重視した、大規模で複雑なプロダクトの維持・成長", "最新技術の実験的な導入", "コスト削減の徹底"], answer: "セキュリティやコンプライアンスを重視した、大規模で複雑なプロダクトの維持・成長", explanation: "大規模で複雑なシステムに対し、セキュリティや法令遵守を重視し、万全の守りでプロダクトを維持・成長させます。(P23参照)", difficulty: "Intermediate" },
+            { id: "I010", question: "DIGEEKのコアバリューの一つ「ユーザー視点」とは、技術力に対してどのようなスタンスを取ることを意味しますか？", options: ["常に最新技術をユーザーに提供する", "技術力に踊らされず、常にユーザー体験を追求する開発を行う", "ユーザーの意見よりも技術者の判断を優先する", "技術的に可能な機能は全て実装する"], answer: "技術力に踊らされず、常にユーザー体験を追求する開発を行う", explanation: "技術的に優れていてもユーザーが喜ばないものは意味がないとし、常にユーザー体験を最優先に考えます。(P29参照)", difficulty: "Intermediate" },
+            { id: "I011", question: "DIGEEKの代表メッセージで、多くの開発会社が抱える問題として指摘されている点は何ですか？", options: ["技術者のスキル不足", "開発コストの高騰", "「作ること」に特化し、事業理解や運用ノウハウに乏しいこと", "海外企業との競争激化"], answer: "「作ること」に特化し、事業理解や運用ノウハウに乏しいこと", explanation: "多くの開発会社が事業理解に乏しく、ソフトウェア・ソリューションとして充分に機能していないと指摘しています。(P30参照)", difficulty: "Intermediate" },
+            { id: "I012", question: "クリエイター向けウィッシュリストSNSの事例で、他社が難しいとした開発をDIGEEKが3ヶ月で実現できた主な理由は何だと考えられますか？", options: ["大幅な人員投入", "要求仕様を正確に把握し、MVPとして適切なスコープを設定したため", "海外の安価なリソース活用", "最新の自動コーディングツール使用"], answer: "要求仕様を正確に把握し、MVPとして適切なスコープを設定したため", explanation: "他社提案が過剰だったのに対し、DIGEEKは顧客の要望を精査し3ヶ月で開発可能なMVPの範囲を見極めたと考えられます。(P16参照)", difficulty: "Intermediate" },
+            { id: "I013", question: "イベントコネクトアプリの事例で、会員数・販売数改善のためにDIGEEKが提案したアプローチの中心は何ですか？", options: ["アプリの大規模な広告宣伝", "商品の大幅な値下げ", "「場」「コミュニティの価値」を創造し、商品のファンを獲得すること", "アプリデザインの全面的な刷新"], answer: "「場」「コミュニティの価値」を創造し、商品のファンを獲得すること", explanation: "商品を取り巻く環境、つまりコミュニティの価値を高めることでファンを獲得し、成果改善を目指しました。(P20参照)", difficulty: "Intermediate" },
+            { id: "I014", question: "国際決済ゲートウェイシステムの事例で、DIGEEKが特に貢献した点は何ですか？", options: ["開発コストの大幅な削減", "軍事セキュリティ構築経験を活かした高いセキュリティレベルの担保とシステム開発", "アプリのUI/UXデザインの刷新", "マーケティング戦略の立案"], answer: "軍事セキュリティ構築経験を活かした高いセキュリティレベルの担保とシステム開発", explanation: "高いセキュリティレベルを担保し、不正行為防止やインフラ監視なども含んだシステム開発を実現しました。(P24参照)", difficulty: "Intermediate" },
+            { id: "I015", question: "DIGEEKが「非ITの方々でも理解・納得できるプロセス」を重視する理由は何ですか？", options: ["開発者の負担を軽減するため", "顧客との認識の齟齬をなくし、本当に必要なシステム開発を実現するため", "開発ドキュメントを簡略化するため", "最新技術の導入をスムーズにするため"], answer: "顧客との認識の齟齬をなくし、本当に必要なシステム開発を実現するため", explanation: "顧客が開発プロセスを理解・納得することで、認識のズレを防ぎ、真に価値のあるシステム開発に繋がります。(P2, P7参照)", difficulty: "Intermediate" },
+            { id: "I016", question: "システム開発における「上流工程のノウハウが大手SIerに集中している」という課題に対し、DIGEEKはどのように対応していますか？", options: ["大手SIerとの協業を強化する", "CTOレベルの人材が戦略策定から関与し、ビジネス・アナリストが設計を支援する体制", "海外のエンジニアリング拠点に上流工程を委託する", "AIによる要件定義の自動化"], answer: "CTOレベルの人材が戦略策定から関与し、ビジネス・アナリストが設計を支援する体制", explanation: "DIGEEKでは、経験豊富な人材が上流工程を一気通貫で担当することで、大手SIerに頼らない質の高い開発を目指しています。(P6, P8参照)", difficulty: "Intermediate" },
+            { id: "I017", question: "DIGEEKの「ラボ型開発」と「受託型開発」の支払いサイト（支払い条件）の違いは何ですか？", options: ["ラボ型：納品時一括、受託型：毎月分割", "ラボ型：翌月末払い、受託型：契約時50%・納品時50%", "両方ともプロジェクト完了後一括払い", "ラボ型：契約時一括、受託型：毎月固定額"], answer: "ラボ型：翌月末払い、受託型：契約時50%・納品時50%", explanation: "ラボ型は準委任契約で翌月末払い、受託型は請負契約で契約時と納品時に分割して支払うのが一般的です。(P14参照)", difficulty: "Intermediate" },
+            { id: "I018", question: "DIGEEKの資料に登場する「ITコンサル」の役割とは何ですか？また、中小規模の開発で活用が難しい理由は何ですか？", options: ["役割：プログラミング、理由：技術の専門性が高すぎるため", "役割：顧客の事業を理解し要件に落とし込む、理由：費用が高いため", "役割：サーバー管理、理由：人員が不足しているため", "役割：デザイン制作、理由：美的センスが合わないため"], answer: "役割：顧客の事業を理解し要件に落とし込む、理由：費用が高いため", explanation: "ITコンサルは顧客の事業を実務レベルで理解し要件定義を行いますが、大手Sierなどに依頼すると費用が高く、中小規模開発では活用しにくいとされています。(P6参照)", difficulty: "Intermediate" },
+            { id: "I019", question: "DIGEEKの「事業開発フェーズ」で行われる「ブレスト」の主な目的は何ですか？", options: ["開発メンバーの親睦を深めること", "プロダクトの方向性を見定め、市場機会や資金調達も考慮した戦略を練ること", "システム設計の詳細を詰めること", "バグの洗い出しを行うこと"], answer: "プロダクトの方向性を見定め、市場機会や資金調達も考慮した戦略を練ること", explanation: "ブレインストーミングを通じて、顧客の目的・課題を共有し、プロダクトの戦略的な方向性を見定めます。(P13参照)", difficulty: "Intermediate" },
+            { id: "I020", question: "DIGEEKが掲げるビジョン「グローバルマーケットのように合理的かつ急速な経済変化を実現」するために、どのようなアプローチを取ろうとしていますか？", options: ["海外企業の買収を積極的に行う", "ピュアで真っ直ぐな姿勢で事業活動に励むお客様とOne TeamでITソリューションを開発する", "国内市場の保護を優先する", "政府主導のプロジェクトにのみ参加する"], answer: "ピュアで真っ直ぐな姿勢で事業活動に励むお客様とOne TeamでITソリューションを開発する", explanation: "顧客と一体となってITソリューションを開発することで、日本社会の経済変化に貢献することを目指しています。(P28参照)", difficulty: "Intermediate" },
+
+            // Advanced (15 questions)
+            { id: "A001", question: "DIGEEKがシステム開発の課題として挙げる「顧客の事業を深く理解できず、適正な提案・見積もりを提示できない」という開発会社側の問題は、どのような悪循環を生み出すと指摘されていますか？", options: ["開発コストのみが増大する", "「見積りが膨らむ」「スケジュールが延びる」「成果が出ない」という結果", "開発者のモチベーションが低下する", "顧客からの信頼を失う"], answer: "「見積りが膨らむ」「スケジュールが延びる」「成果が出ない」という結果", explanation: "不適切な提案・見積もりは、結果的にプロジェクトの遅延や予算超過、そして成果の未達といった深刻な問題に繋がります。(P4, P5参照)", difficulty: "Advanced" },
+            { id: "A002", question: "DIGEEKの開発プロセスにおいて、「モックアップで完成形を可視化する」ことの戦略的な意義は何ですか？単なるデザイン確認以上の目的を説明してください。", options: ["開発者のスキルアップのため", "最新デザイントレンドの適用確認", "開発初期段階での認識齟齬の徹底排除と、それによる手戻り防止、正確な見積もり、スムーズな開発進行の実現", "競合製品との差別化ポイントの明確化"], answer: "開発初期段階での認識齟齬の徹底排除と、それによる手戻り防止、正確な見積もり、スムーズな開発進行の実現", explanation: "モックアップは、顧客と開発者間の共通理解を形成し、プロジェクト全体のリスクを低減する戦略的ツールです。(P7参照)", difficulty: "Advanced" },
+            { id: "A003", question: "DIGEEKが「ラボ型開発」を推奨するのは、主にどのような特性を持つプロジェクトですか？その理由も合わせて説明してください。", options: ["特性：要件が完全に確定している、理由：計画通りに進めやすいため", "特性：短期間で完了する小規模案件、理由：コストを抑えやすいため", "特性：仕様変更が頻繁に発生する可能性のある変動的かつ長期的な開発、理由：追加費用なしで柔軟に対応できるため", "特性：オフショアチームを活用する案件、理由：コミュニケーションコストを削減できるため"], answer: "特性：仕様変更が頻繁に発生する可能性のある変動的かつ長期的な開発、理由：追加費用なしで柔軟に対応できるため", explanation: "ラボ型開発は、アジャイルな開発や仕様変更に強く、長期的なパートナーシップを築きやすいモデルです。(P11, P14参照)", difficulty: "Advanced" },
+            { id: "A004", question: "DIGEEKの代表メッセージから読み取れる、同社が従来の開発会社と一線を画すための最も重要な提供価値は何だと考えられますか？", options: ["圧倒的な低価格", "最新技術への追従スピード", "顧客の事業目的や成長フェーズへの深い理解と、それに最適化されたソリューション提供", "グローバルな開発リソース"], answer: "顧客の事業目的や成長フェーズへの深い理解と、それに最適化されたソリューション提供", explanation: "代表の永山氏は、事業理解の欠如が従来の開発会社の問題点であると指摘し、DIGEEKはその点を重視しています。(P30参照)", difficulty: "Advanced" },
+            { id: "A005", question: "DIGEEKが「事業グロースに強い」と自負する背景には、どのような組織体制や人材戦略があると考えられますか？資料から読み取れる複数の要素を挙げてください。", options: ["営業力の強化とマーケティング予算の増強", "CTOレベル人材による上流工程の一気通貫担当、ビジネス・アナリストによる論理破綻チェックとプロジェクト推進、代表による最終承認体制", "海外の優秀なエンジニアの積極採用とオフショア開発の推進", "特定の最新技術に特化した専門家チームの編成"], answer: "CTOレベル人材による上流工程の一気通貫担当、ビジネス・アナリストによる論理破綻チェックとプロジェクト推進、代表による最終承認体制", explanation: "単なる技術提供に留まらず、事業戦略レベルから関与できる人材と、それを支える組織体制が強みです。(P8参照)", difficulty: "Advanced" },
+            { id: "A006", question: "DIGEEKの3つのコアバリュー「ビジネス視点」「ユーザー視点」「機動力」は、それぞれどのような具体的な行動や判断に繋がると考えられますか？", options: ["利益追求、最新技術採用、迅速な開発", "顧客の事業成長貢献、ユーザー中心設計、変化への柔軟な対応", "市場シェア拡大、独自技術開発、大規模チーム運営", "コスト削減、機能の多さ追求、計画遵守"], answer: "顧客の事業成長貢献、ユーザー中心設計、変化への柔軟な対応", explanation: "これらのバリューは、顧客の成功、使いやすさ、そして市場や状況の変化への適応力を重視する行動指針となります。(P29参照)", difficulty: "Advanced" },
+            { id: "A007", question: "DIGEEKが「日本の悪しきITゼネコン構造」を問題視し、それに対するソリューションを提供しようとする背景には、どのような市場の非効率性や顧客の不利益が存在すると考えられますか？", options: ["技術革新の遅れと国際競争力の低下", "開発コストの高止まり、責任の所在の曖昧化、顧客ニーズとの乖離、中抜きによる品質低下", "国内エンジニアの不足と海外への人材流出", "セキュリティリスクの増大と情報漏洩事件の多発"], answer: "開発コストの高止まり、責任の所在の曖昧化、顧客ニーズとの乖離、中抜きによる品質低下", explanation: "多重下請け構造は、コミュニケーションロスや中間マージンによるコスト増、品質管理の難しさといった問題を生みがちです。(P6, P28参照)", difficulty: "Advanced" },
+            { id: "A008", question: "スタートアップ、SMB、エンタープライズという3つの顧客セグメントに対し、DIGEEKがそれぞれ異なる戦略的スローガンを掲げているのはなぜですか？その意図を考察してください。", options: ["単にキャッチーな言葉を使いたいから", "各セグメントが抱える課題や成長フェーズ、求める価値が異なるため、それぞれに最適化されたアプローチを示すため", "社内の開発チームをセグメント別に分けるため", "競合他社との差別化を明確にするため"], answer: "各セグメントが抱える課題や成長フェーズ、求める価値が異なるため、それぞれに最適化されたアプローチを示すため", explanation: "顧客の規模や状況によって最適な開発戦略は異なります。DIGEEKはそれを理解し、テーラーメイドな支援を行う姿勢を示しています。(P15, P19, P23参照)", difficulty: "Advanced" },
+            { id: "A009", question: "DIGEEKの資料全体を通して、同社が最も避けようとしているシステム開発における「悲惨な結果」とは、具体的にどのような状況を指していると考えられますか？", options: ["開発予算の大幅な超過のみ", "納期の遅延のみ", "「見積りが膨らむ」「スケジュールも延びる」「成果が出ない」という三重苦の状況", "最新技術の導入が見送られる状況"], answer: "「見積りが膨らむ」「スケジュールも延びる」「成果が出ない」という三重苦の状況", explanation: "これらは、不適切な開発プロセスやコミュニケーション不足が引き起こす典型的な失敗パターンです。(P4, P5参照)", difficulty: "Advanced" },
+            { id: "A010", question: "DIGEEKの「DX×生成AI」サービスが、従来のシステム開発や業務改善と比べて、どのような点で革新的だと考えられますか？", options: ["単なる自動化に留まらず、データ統合とLLM活用により、従来は人間にしかできなかった高度な判断や創造的な業務までAIが担える可能性", "開発コストが従来よりも大幅に安価になる点", "プログラミングが不要になる点", "全ての業務を完全に無人化できる点"], answer: "単なる自動化に留まらず、データ統合とLLM活用により、従来は人間にしかできなかった高度な判断や創造的な業務までAIが担える可能性", explanation: "生成AIの活用は、定型業務の自動化を超え、より知的で複雑な業務の変革をもたらす可能性を秘めています。(P2参照)", difficulty: "Advanced" },
+            { id: "A011", question: "DIGEEKが「顧客の事業を完全にトレースして課題を徹底的に深掘りする」と述べていますが、これが実現できた場合、どのようなメリットが顧客にもたらされますか？", options: ["開発期間が必ず短縮される", "表面的な問題解決ではなく、事業の根本的な課題解決や新たな価値創造に繋がるシステムが期待できる", "開発費用が必ず安くなる", "常に最新の技術トレンドが反映される"], answer: "表面的な問題解決ではなく、事業の根本的な課題解決や新たな価値創造に繋がるシステムが期待できる", explanation: "深い事業理解は、真に価値のある、持続可能なシステム開発の基盤となります。(P27参照)", difficulty: "Advanced" },
+            { id: "A012", question: "もしあなたがDIGEEKの競合他社の経営者だとしたら、DIGEEKのどのような強みや戦略を最も警戒しますか？理由も添えてください。", options: ["価格競争力：徹底したコスト削減で低価格を実現している点", "技術特化戦略：特定の最新技術において他社を圧倒している点", "事業成長へのコミットメントと上流工程からの伴走力：単なる開発請負ではなく、顧客の事業成功をゴールとする姿勢とそれを実現する体制", "グローバルな拠点展開：世界中の安価なリソースを活用できる点"], answer: "事業成長へのコミットメントと上流工程からの伴走力：単なる開発請負ではなく、顧客の事業成功をゴールとする姿勢とそれを実現する体制", explanation: "技術力だけでなく、顧客の事業に深くコミットする姿勢は、長期的な信頼関係を築き、他社との差別化要因となり得ます。(P7, P8, P29参照)", difficulty: "Advanced" },
+            { id: "A013", question: "DIGEEKが「サスティナブルな開発」を提供するとありますが、これはどのような意味合いを持つと考えられますか？", options: ["環境に配慮したエコな開発手法", "一度開発したら修正や変更が一切不要なシステム", "顧客の事業成長に合わせて柔軟に拡張・改修でき、長期的に価値を提供し続けられる開発", "開発費用を毎年定額にするサブスクリプションモデル"], answer: "顧客の事業成長に合わせて柔軟に拡張・改修でき、長期的に価値を提供し続けられる開発", explanation: "サスティナブルとは、短期的な成果だけでなく、将来の変化にも対応し、持続的に価値を生み出す開発を指します。(P27参照)", difficulty: "Advanced" },
+            { id: "A014", question: "DIGEEKの資料で紹介されている複数の成功事例に共通して見られる、DIGEEKの貢献の仕方の特徴は何ですか？", options: ["常に最新のAI技術を全面的に導入している", "顧客の具体的な課題や目標に対し、技術的な工夫や戦略的な提案を通じて、事業成果に直結する支援を行っている", "開発期間を他社の半分以下に短縮している", "全てのプロジェクトで海外のオフショアチームを活用している"], answer: "顧客の具体的な課題や目標に対し、技術的な工夫や戦略的な提案を通じて、事業成果に直結する支援を行っている", explanation: "各事例において、DIGEEKは顧客の状況を深く理解し、技術とビジネスの両面から最適なソリューションを提供しています。(P9-P11, P16, P20, P24参照)", difficulty: "Advanced" },
+            { id: "A015", question: "DIGEEKが「品質、スピード、コスト、内製化」といった経営状況による優先度の変化に対応できると述べている背景には、どのような経験や組織能力があると考えられますか？", options: ["豊富な資金力と大規模な開発チーム", "過去の多くのプロジェクトで顧客の急な要望変更に対応してきた経験と、それによって培われた柔軟性や問題解決能力", "特定の開発手法やツールに固執しない方針", "AIによる開発プロセスの完全自動化"], answer: "過去の多くのプロジェクトで顧客の急な要望変更に対応してきた経験と、それによって培われた柔軟性や問題解決能力", explanation: "多様な顧客の要求に応え続けてきた経験が、変化への対応力と最適解を提案できる能力の基盤となっています。(P29参照)", difficulty: "Advanced" }
+        ];
+
+        // This function now directly uses allQuizQuestionsBank (which is the expanded fallback list)
+        async function getQuestionsForSession(difficulty, count) {
+            loadingText.textContent = `${difficulty}レベルの問題を準備中です...`;
+            await new Promise(resolve => setTimeout(resolve, 100)); // Short delay for UX
+
+            const answeredQuestions = JSON.parse(localStorage.getItem(ANSWERED_QUESTIONS_KEY)) || {};
+            const answeredQuestionsForDifficulty = answeredQuestions[difficulty] || [];
+
+            let questionsForDifficulty = allQuizQuestionsBank.filter(q => q.difficulty === difficulty);
+            let availableQuestions = questionsForDifficulty.filter(q => !answeredQuestionsForDifficulty.includes(q.id));
+            
+            if (availableQuestions.length < count) {
+                // Not enough unanswered questions for this difficulty, reset answered for this difficulty
+                if (questionsForDifficulty.length >= count) { // Only reset if total questions for difficulty is enough
+                    showTemporaryMessage(`${difficulty}レベルの未正解問題が不足。履歴をリセットして再出題します。`, false);
+                    answeredQuestions[difficulty] = [];
+                    localStorage.setItem(ANSWERED_QUESTIONS_KEY, JSON.stringify(answeredQuestions));
+                    availableQuestions = questionsForDifficulty;
+                } else { // Not enough questions in bank even if all are unanswered
+                     availableQuestions.push(...getRandomQuestions(allQuizQuestionsBank.filter(q => q.difficulty !== difficulty && !Object.values(answeredQuestions).flat().includes(q.id)), count - availableQuestions.length));
+                }
+            }
+             // If still not enough, just pick from what's available, even if it means fewer than 'count'
+            const selectedSessionQuestions = getRandomQuestions(availableQuestions, count);
+
+
+            if (selectedSessionQuestions.length > 0) {
+                if (selectedSessionQuestions.length < count && questionsForDifficulty.length >=count) {
+                     showTemporaryMessage(`未正解問題が${selectedSessionQuestions.length}問のみでした。`, false);
+                } else if (selectedSessionQuestions.length < count) {
+                    showTemporaryMessage(`問題が${selectedSessionQuestions.length}問のみ準備できました。`, false);
+                }
+                else {
+                    showTemporaryMessage(`${selectedSessionQuestions.length}問の${difficulty}クイズを準備しました！`, false);
+                }
+            } else {
+                showTemporaryMessage(`${difficulty}レベルの問題が見つかりませんでした。基本的な問題で開始します。`, true);
+                return getRandomQuestions(allQuizQuestionsBank, count); 
+            }
+            return selectedSessionQuestions;
+        }
+
+
+        function showTemporaryMessage(message, isError = false) {
+            messageBox.textContent = message;
+            messageBox.className = 'message-box show';
+            messageBox.style.backgroundColor = isError ? '#ef4444' : '#10b981';
+            setTimeout(() => { messageBox.className = 'message-box'; }, 3500);
+        }
+        
+        async function startQuizWithDifficulty(difficulty) {
+            selectedDifficulty = difficulty;
+            difficultySelectionArea.classList.add('hidden');
+            loadingMessage.classList.remove('hidden');
+            mainTitle.innerHTML = `<span class="digeek-title-yellow">DIGEEK</span> Quiz! (${difficulty})`;
+            sessionQuestions = []; 
+            incorrectAnswersForReview = []; 
+            aphorismArea.classList.add('hidden'); 
+
+            document.querySelectorAll('.difficulty-btn-styled').forEach(btn => btn.classList.remove('selected'));
+            document.querySelector(`.difficulty-btn-styled[data-difficulty="${difficulty}"]`).classList.add('selected');
+
+            sessionQuestions = await getQuestionsForSession(selectedDifficulty, QUESTIONS_PER_SESSION);
+            
+            if (sessionQuestions.length === 0) { 
+                 loadingMessage.innerHTML = '<p class="text-lg text-red-600">クイズを開始できませんでした。ページを再読み込みするか、正解履歴をリセットしてみてください。</p>';
+                 difficultySelectionArea.classList.remove('hidden');
+                 mainTitle.innerHTML = `<span class="digeek-title-yellow">DIGEEK</span> Quiz!`;
+                 return;
+            }
+
+            currentQuestionInSessionIndex = 0;
+            score = 0;
+            scoreDisplay.textContent = score;
+            feedbackText.textContent = '';
+            nextButton.classList.add('hidden');
+            loadingMessage.classList.add('hidden');
+            gameArea.classList.remove('hidden');
+            navigationAndScoreArea.classList.remove('hidden');
+            finalScoreArea.classList.add('hidden');
+            displayQuestion(); 
+        }
+
+
+        function getRandomQuestions(sourceArray, count) {
+            if (!sourceArray || sourceArray.length === 0) return [];
+            const shuffled = [...sourceArray].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, Math.min(count, shuffled.length));
+        }
+
+        function normalizeText(text) {
+            if (typeof text !== 'string') return '';
+            let normalized = text.normalize('NFKC').toLowerCase(); 
+            normalized = normalized.replace(/[。,、、「」（）\(\)\.\,\-\－ー〜！？!?<>＜＞「」【】『』＃＃＄％＆＝～｜￥＠｀＋＊；：￥＾＿]/g, "");
+            normalized = normalized.replace(/\s+/g, "").trim(); 
+            return normalized;
+        }
+
+
+        function displayQuestion() {
+            explanationContainer.classList.add('hidden');
+            explanationText.textContent = '';
+
+            if (currentQuestionInSessionIndex < sessionQuestions.length) {
+                const currentQ = sessionQuestions[currentQuestionInSessionIndex];
+                if (!currentQ || typeof currentQ.question === 'undefined' || !Array.isArray(currentQ.options) || currentQ.options.length !== 4) { 
+                    console.error("Invalid question data at index:", currentQuestionInSessionIndex, "Question object:", currentQ);
+                    showTemporaryMessage("問題データの形式が正しくありません。この問題をスキップします。", true);
+                    currentQuestionInSessionIndex++;
+                    if (currentQuestionInSessionIndex < sessionQuestions.length) { 
+                        displayQuestion();
+                    } else {
+                        showFinalScore();
+                    }
+                    return;
+                }
+
+                questionNumberText.textContent = `Question ${currentQuestionInSessionIndex + 1} / ${sessionQuestions.length}`;
+                questionText.textContent = currentQ.question;
+                answerOptionsContainer.innerHTML = ''; 
+
+                const optionNumbers = ['1', '2', '3', '4']; 
+                const shuffledOptions = currentQ.options ? [...currentQ.options].sort(() => Math.random() - 0.5) : [];
+
+                shuffledOptions.forEach((option, index) => {
+                    const optionContainer = document.createElement('div');
+                    optionContainer.classList.add('answer-btn-container');
+                    
+                    const numberSpan = document.createElement('span');
+                    numberSpan.classList.add('answer-option-number');
+                    numberSpan.textContent = optionNumbers[index]; 
+                    optionContainer.appendChild(numberSpan);
+
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('answer-btn'); 
+                    button.onclick = () => selectAnswer(button, option, currentQ.answer, currentQ.explanation, currentQ.question, currentQ.id);
+                    optionContainer.appendChild(button);
+                    
+                    answerOptionsContainer.appendChild(optionContainer);
+                });
+                updateProgressBar();
+            } else {
+                 showFinalScore();
+            }
+        }
+
+        function selectAnswer(buttonEl, selectedOption, correctAnswer, explanation, question, questionId) {
+            const buttons = answerOptionsContainer.querySelectorAll('.answer-btn'); 
+            
+            const normalizedSelected = normalizeText(selectedOption);
+            const normalizedCorrectFromData = normalizeText(correctAnswer); 
+
+            let correctButtonForHighlight = null;
+            buttons.forEach(btn => {
+                btn.disabled = true; 
+                if (normalizeText(btn.textContent) === normalizedCorrectFromData) {
+                    correctButtonForHighlight = btn;
+                }
+            });
+
+            explanationText.innerHTML = explanation ? explanation.replace(/\(P(\d+)\S*\)/g, '(資料P$1参照)') : "解説はありません。";
+            explanationContainer.classList.remove('hidden');
+
+            if (normalizedSelected === normalizedCorrectFromData) {
+                score++;
+                scoreDisplay.textContent = score;
+                feedbackText.textContent = 'Correct!';
+                feedbackText.className = 'feedback-text correct';
+                if (buttonEl) buttonEl.classList.add('correct');
+                // Store answered question ID
+                let answeredQuestions = JSON.parse(localStorage.getItem(ANSWERED_QUESTIONS_KEY)) || {};
+                if (!answeredQuestions[selectedDifficulty]) {
+                    answeredQuestions[selectedDifficulty] = [];
+                }
+                if (!answeredQuestions[selectedDifficulty].includes(questionId)) {
+                    answeredQuestions[selectedDifficulty].push(questionId);
+                }
+                localStorage.setItem(ANSWERED_QUESTIONS_KEY, JSON.stringify(answeredQuestions));
+
+            } else {
+                feedbackText.textContent = `Incorrect... The correct answer was: "${correctAnswer}"`;
+                feedbackText.className = 'feedback-text incorrect';
+                if (buttonEl) buttonEl.classList.add('incorrect'); 
+                if (correctButtonForHighlight) correctButtonForHighlight.classList.add('correct'); 
+                
+                incorrectAnswersForReview.push({
+                    id: questionId,
+                    question: question,
+                    yourAnswer: selectedOption,
+                    correctAnswer: correctAnswer,
+                    explanation: explanation
+                });
+            }
+
+            if (currentQuestionInSessionIndex < sessionQuestions.length - 1) {
+                 nextButton.classList.remove('hidden');
+            } else {
+                 nextButton.classList.add('hidden'); 
+                 setTimeout(showFinalScore, 1500); 
+            }
+        }
+
+        function updateProgressBar() {
+            const progressPercentage = sessionQuestions.length > 0 ? ((currentQuestionInSessionIndex + 1) / sessionQuestions.length) * 100 : 0;
+            progressBar.style.width = `${progressPercentage}%`;
+        }
+
+        function showFinalScore() {
+            gameArea.classList.add('hidden');
+            navigationAndScoreArea.classList.add('hidden');
+            finalScoreArea.classList.remove('hidden');
+            finalScoreDisplay.textContent = `${score} / ${sessionQuestions.length}`;
+            selectedDifficultyText.textContent = `Difficulty: ${selectedDifficulty}`;
+            totalQuestionsMessage.textContent = `(From a bank of ${allQuizQuestionsBank.length} questions)`; 
+
+            let message = '';
+            const percentage = sessionQuestions.length > 0 ? (score / sessionQuestions.length) * 100 : 0;
+            if (percentage === 100) {
+                message = 'Excellent! Perfect score! You are a DIGEEK Master!';
+            } else if (percentage >= 80) {
+                message = 'Great job! You have a strong understanding of DIGEEK!';
+            } else if (percentage >= 60) {
+                message = 'Well done! Almost a master!';
+            } else if (percentage >= 40) {
+                message = 'Good effort! Read the explanations to learn more!';
+            } else {
+                message = 'Keep trying! Review the DIGEEK material again!';
+            }
+            finalMessageText.textContent = message;
+
+            if (incorrectAnswersForReview.length > 0) {
+                reviewButton.classList.remove('hidden');
+            } else {
+                reviewButton.classList.add('hidden');
+            }
+            const randomAphorism = aphorisms[Math.floor(Math.random() * aphorisms.length)];
+            aphorismArea.textContent = `格言：「${randomAphorism}」`;
+            aphorismArea.classList.remove('hidden');
+        }
+        
+        reviewButton.addEventListener('click', () => {
+            reviewItemsContainer.innerHTML = ''; 
+            if (incorrectAnswersForReview.length > 0) {
+                noIncorrectMessage.classList.add('hidden');
+                copyReviewButton.classList.remove('hidden');
+                incorrectAnswersForReview.forEach(item => {
+                    const reviewItemDiv = document.createElement('div');
+                    reviewItemDiv.classList.add('review-item');
+                    reviewItemDiv.innerHTML = `
+                        <p class="review-question">${item.question}</p>
+                        <p class="review-your-answer">Your Answer: <span>${item.yourAnswer}</span></p>
+                        <p class="review-correct-answer">Correct Answer: <span>${item.correctAnswer}</span></p>
+                        <p class="review-explanation">${item.explanation ? item.explanation.replace(/\(P(\d+)\S*\)/g, '(Ref: P$1)') : 'No explanation.'}</p>
+                    `;
+                    reviewItemsContainer.appendChild(reviewItemDiv);
+                });
+            } else {
+                noIncorrectMessage.classList.remove('hidden');
+                copyReviewButton.classList.add('hidden');
+            }
+            reviewModalOverlay.classList.add('show');
+        });
+
+        copyReviewButton.addEventListener('click', () => {
+            let reviewText = "Review of Incorrect Answers:\n\n";
+            if (incorrectAnswersForReview.length > 0) {
+                incorrectAnswersForReview.forEach((item, index) => {
+                    reviewText += `Question ${index + 1}: ${item.question}\n`;
+                    reviewText += `Your Answer: ${item.yourAnswer}\n`;
+                    reviewText += `Correct Answer: ${item.correctAnswer}\n`;
+                    reviewText += `Explanation: ${item.explanation ? item.explanation.replace(/\(P(\d+)\S*\)/g, '(Ref: P$1)') : 'No explanation.'}\n\n`;
+                });
+            } else {
+                reviewText = "Excellent! All answers were correct.";
+            }
+
+            const textarea = document.createElement('textarea');
+            textarea.value = reviewText;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy'); 
+                showTemporaryMessage('Review copied to clipboard!', false);
+            } catch (err) {
+                showTemporaryMessage('Failed to copy. Please copy manually.', true);
+                console.error('Failed to copy text: ', err);
+            }
+            document.body.removeChild(textarea);
+        });
+
+        resetAnsweredBtn.addEventListener('click', () => {
+            if (localStorage.getItem(ANSWERED_QUESTIONS_KEY)) {
+                localStorage.removeItem(ANSWERED_QUESTIONS_KEY);
+                showTemporaryMessage('正解履歴をリセットしました！', false);
+            } else {
+                showTemporaryMessage('リセットする正解履歴がありません。', false);
+            }
+        });
+
+
+        reviewModalCloseBtn.addEventListener('click', () => {
+            reviewModalOverlay.classList.remove('show');
+        });
+        reviewModalOverlay.addEventListener('click', (event) => { 
+            if (event.target === reviewModalOverlay) {
+                reviewModalOverlay.classList.remove('show');
+            }
+        });
+
+
+        beginnerBtn.addEventListener('click', () => startQuizWithDifficulty('Beginner'));
+        intermediateBtn.addEventListener('click', () => startQuizWithDifficulty('Intermediate'));
+        advancedBtn.addEventListener('click', () => startQuizWithDifficulty('Advanced'));
+
+        nextButton.addEventListener('click', () => {
+            currentQuestionInSessionIndex++;
+            feedbackText.textContent = '';
+            nextButton.classList.add('hidden');
+            const buttons = answerOptionsContainer.querySelectorAll('.answer-btn');
+            buttons.forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('correct', 'incorrect');
+            });
+            displayQuestion();
+        });
+
+        restartButton.addEventListener('click', () => {
+            finalScoreArea.classList.add('hidden');
+            difficultySelectionArea.classList.remove('hidden');
+            mainTitle.innerHTML = `<span class="digeek-title-yellow">DIGEEK</span> Quiz!`; 
+            document.querySelectorAll('.difficulty-btn-styled').forEach(btn => btn.classList.remove('selected'));
+            aphorismArea.classList.add('hidden');
+        });
+
+        // Initial setup
+        mainTitle.innerHTML = `<span class="digeek-title-yellow">DIGEEK</span> Quiz!`;
+        difficultySelectionArea.classList.remove('hidden');
+        loadingMessage.classList.add('hidden');
+        gameArea.classList.add('hidden');
+        finalScoreArea.classList.add('hidden');
+        navigationAndScoreArea.classList.add('hidden');
+
+    </script>
+</body>
+</html>
